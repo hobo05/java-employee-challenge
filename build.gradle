@@ -1,21 +1,70 @@
 plugins {
-    id 'org.springframework.boot' version '2.6.1'
-    id 'io.spring.dependency-management' version '1.0.11.RELEASE'
     id 'java'
+    id 'org.springframework.boot' version '3.1.5'
+    id 'io.spring.dependency-management' version '1.1.3'
+    id "io.freefair.lombok" version '8.4'
+    id "org.openapi.generator" version "6.6.0"
 }
 
 group = 'com.example'
 version = '0.0.1-SNAPSHOT'
-sourceCompatibility = '11'
+
+java {
+    sourceCompatibility = '17'
+}
 
 repositories {
     mavenCentral()
 }
 
 dependencies {
+    // original dependencies
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'javax.inject:javax.inject:1'
+
+    // generated OpenApi Feign client
+    implementation "io.github.openfeign:feign-core:$feignVersion"
+    implementation "io.github.openfeign:feign-jackson:$feignVersion"
+    implementation "io.github.openfeign:feign-slf4j:$feignVersion"
+    implementation "io.github.openfeign:feign-okhttp:$feignVersion"
+    implementation "io.github.openfeign.form:feign-form:$feignFormVersion"
+    implementation "org.openapitools:jackson-databind-nullable:$jacksonDatabindNullableVersion"
+    implementation "com.google.code.findbugs:jsr305:$jsr305Version"
+    implementation "javax.annotation:javax.annotation-api:$javaxAnnotationApiVersion"
+
+    // validation
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+    // swagger
+    implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:$springdocVersion"
+
+    // testing dependencies
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation "org.assertj:assertj-core:$assertjVersion"
+    testImplementation "org.wiremock:wiremock:3.3.1"
+}
+
+openApiGenerate {
+    generatorName.set("java")
+    library.set("feign")
+    inputSpec.set("$rootDir/specs/employee-api.yaml")
+    outputDir.set("$buildDir/generated")
+    apiPackage.set("com.example.dummy.api")
+    invokerPackage.set("com.example.dummy.invoker")
+    modelPackage.set("com.example.dummy.model")
+    configOptions.set([
+        dateLibrary: "java8"
+    ])
+}
+
+compileJava.dependsOn tasks.openApiGenerate
+
+sourceSets {
+    main {
+        java {
+            srcDirs += ["${buildDir}/generated/src/main/java"]
+        }
+    }
 }
 
 test {
