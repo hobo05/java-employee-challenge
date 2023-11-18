@@ -1,118 +1,76 @@
-# Coding Challenge
+# Implementation
 
-### In this assessment you will be tasked with filling out the functionality of different methods that will be listed further down.
-These methods will require some level of api interactions with the following base url: https://dummy.restapiexample.com.
-Please keep the following in mind when doing this assessment: clean coding practices, test driven development, logging, and scalability.
-If you are unable to successfully receive responses from the endpoints, mocking the response calls may prove to be helpful.
+by: Timothy Cheng tim.cheng09@gmail.com https://www.linkedin.com/in/tcheng09/
 
-### Endpoints to implement
+## Original README
 
-getAllEmployees()
+[Original README](ORIGINAL_README.md)
 
-    output - list of employees
-    description - this should return all employees
+## Running the solution
 
-getEmployeesByNameSearch()
+**Note:**
 
-    output - list of employees
-    description - this should return all employees whose name contains or matches the string input provided
+1. Run `./gradlew bootRun`
+2. Navigate to http://localhost:8080/swagger-ui/index.html to explore the API
 
-getEmployeeById(string id)
+### Configuring retries and timeout
 
-    output - employee
-    description - this should return a single employee
+- Take a look in `AppConfig` to see the configuration options
+- The app has been configured to deal with the tendency for https://dummy.restapiexample.com to return 429s when 
+  you hit the API too quickly between requests
 
-getHighestSalaryOfEmployees()
+## High level approach
 
-    output - integer of the highest salary
-    description -  this should return a single integer indicating the highest salary of all employees
+1. I did some exploratory testing which I documented in [API Exploration](Notes/API%20Exploration.md)
+2. I wrote up a Swagger / OpenAPI spec that was consistent with what I found. It can found here [employee-api.yaml](specs/employee-api.yaml)
+3. I manually tested the spec to ensure it was consistent with my notes and the description on the API website 
+4. I wrote up a [TODO](Notes/TODO.md) list to plan out the work
+5. I upgraded all the Spring dependencies and configured the project for Java 17
+6. I generated an [OpenFeign](https://github.com/OpenFeign/feign) client using [openapi-generator](https://github.com/OpenAPITools/openapi-generator)
+7. I used [Wiremock](https://wiremock.org/) to mock out the endpoints of the API and wrote tests against them (service and controller)
+8. I added Swagger annotations to the implemented API and exposed it using [springdoc](https://springdoc.org/)
 
-getTop10HighestEarningEmployeeNames()
+## Comments on implementation
 
-    output - list of employees
-    description -  this should return a list of the top 10 employees based off of their salaries
+- Search
+  - Using `String.contains()` with `String.toLowerCase()` is not the optimal way to implement search. Instead we should use
+    a DB that is built for full-text search. Some of the features of those DBs would include: ASCII folder, word stemming,
+    stop word removal, fuzzy searching using Levenshtein distance, auto-complete using ngrams, etc...
+- Performance
+  - The current implementation filters the results in-memory, which is not optimal
+  - Ideally, we would want the underlying API to support filtering/paging/sorting natively so when we have this 
+    higher level API, we would simply be able to pass on the appropriate parameters to achieve that result. 
+  - One way to achieve a higher performance, given that the underlying API's rate limiting is very aggressive is to 
+    cache the results of the various endpoints. Spring has a `@Cacheable` annotation that supports different cache implementations
+    - Caching can lead to other problems as we'd have to make sure that we set the expectation of consumers appropriately and that 
+      we evict the cache on write
+- Testing
+  - Testing has been done against wiremock which gives us full control of the behavior of the stubs, including delays or network failures
+  - The `EmployeeServiceTest` tests the service hitting the underlying API and converting the results in local domain objects. Any business
+    logic is also contained here. In this case, it's just some in-memory filtering. Known or expected errors are raised as domain-specific 
+    exceptions which gives more context to the `ExceptionHandler` later down the line. However, status codes are not determined at this level.
+    - no web environment is needed, but we still use `@SpringBootTest` to have access to our beans in our application context
+  - The `EmployeeControllerTest` tests that the controller returns the results in the expected format and any input parameter or request
+    body are validated. It is also at this level where we test the handling of `Exception`s and assert the appropriate status code and error response
+    - a mock web environment is used as this provides the very handy `MockMvc` where we can use Spring's built-in class to hit our endpoints
+      without actually running a full server and assert on the response all in a fluent API
 
-createEmployee(string name, string salary, string age)
+## Future considerations
 
-    output - string of the status (i.e. success)
-    description -  this should return a status of success or failed based on if an employee was created
-
-deleteEmployee(String id)
-
-    output - the name of the employee that was deleted
-    description - this should delete the employee with specified id given
-
-### External endpoints from base url
-#### This section will outline all available endpoints and their request and response models from https://dummy.restapiexample.com
-/employees
-
-    request:
-        method: GET
-        parameters: n/a
-        full route: https://dummy.restapiexample.com/api/v1/employees
-    response:
-        {
-            "status": "success",
-            "data": [
-                {
-                "id": "1",
-                "employee_name": "Tiger Nixon",
-                "employee_salary": "320800",
-                "employee_age": "61",
-                "profile_image": ""
-                },
-                ....
-            ]
-        }
-
-/employee/{id}
-
-    request:
-        method: GET
-        parameters: 
-            id (String)
-        full route: https://dummy.restapiexample.com/api/v1/employee/{id}
-    response: 
-        {
-            "status": "success",
-            "data": {
-                "id": "1",
-                "employee_name": "Foo Bar",
-                "employee_salary": "320800",
-                "employee_age": "61",
-                "profile_image": ""
-            }
-        }
-
-/create
-
-    request:
-        method: POST
-        parameters: 
-            name (String),
-            salary (String),
-            age (String)
-        full route: https://dummy.restapiexample.com/api/v1/create
-    response:
-        {
-            "status": "success",
-            "data": {
-                "name": "test",
-                "salary": "123",
-                "age": "23",
-                "id": 25
-            }
-        }
-
-/delete/{id}
-
-    request:
-        method: DELETE
-        parameters:
-            id (String)
-        full route: https://dummy.restapiexample.com/api/v1/delete/{id}
-    response:
-        {
-            "status": "success",
-            "message": "successfully! deleted Record"
-        }
+- Security
+  - We could implement JWT auth to secure our endpoints
+  - We could create enable method security to individually secure our endpoints based on authorities/roles (e.g. only admins can perform write operations)
+- Testing
+  - Automated E2E tests would ideally be written as well. This would be part of the CI/CD pipeline where the build passes and the web app is
+    automatically deployed to a dev or integration environment where a suite of tests is triggered against real endpoints
+- Versioning
+  - Typically, APIs are reworked over time and sometimes there can be breaking changes that warrant a completely new set of endpoints.
+    Adding versions to the API endpoints are a good way to anticipate migrating between two versions of the API
+- Metrics
+  - Spring has the [Spring Actuator](https://docs.spring.io/spring-boot/docs/current/reference/html/actuator.html) project which allows
+    provides a default set of metrics, including health checks
+  - Since this API relies directly on another API, it may be a good idea to implement a healthcheck that hits the underlying API
+  - We could also gather metrics on the performance of the underlying API: average (or 98 percentile) request time, error rate, status code breakdown, etc...
+  - In this specific implementation, we could explore using `feign.Capability` to intercept request/responses to add these metrics
+- Containerization
+  - Spring boot already includes a gradle task called `bootBuildImage` that we could call during our CI/CD pipeline to build, tag, and upload to an image repository
