@@ -34,7 +34,6 @@ public class EmployeeService implements IEmployeeService {
                 .toList();
     }
 
-    // TODO we are not handling search terms that contain accents. this could be achieved by doing ASCII folding
     @Override
     public List<Employee> getEmployeesByNameSearch(String searchString) {
         if (searchString == null) {
@@ -56,7 +55,6 @@ public class EmployeeService implements IEmployeeService {
         }
     }
 
-    // TODO what about a tie-breaker situation?
     @Override
     public Employee getHighestSalaryEmployee() {
         return getAllEmployeesStream()

@@ -32,7 +32,6 @@ public interface IEmployeeController {
     @GetMapping("/search/{searchString}")
     ResponseEntity<List<Employee>> getEmployeesByNameSearch(@Parameter(description = "Search string") @PathVariable String searchString);
 
-    // TODO ideally the id here should be of type long so spring will automatically raise a 400 if a non-numerical value is passed in
     @Operation(summary = "Get employee by id", tags = {"employee"})
     @ApiResponses(value = {@ApiResponse(description = "successful operation",
             content = {@Content(mediaType = "application/json", schema = @Schema(implementation = Employee.class))})})
@@ -50,7 +49,6 @@ public interface IEmployeeController {
     @GetMapping("/topTenHighestEarningEmployeeNames")
     ResponseEntity<List<String>> getTopTenHighestEarningEmployeeNames();
 
-    // TODO it would be better to use a POJO with validation annotations and @Valid
     @Operation(summary = "Create an employee", tags = {"employee"})
     @ApiResponses(value = {@ApiResponse(description = "successful operation",
             content = {@Content(mediaType = "application/json", schema = @Schema(implementation = Employee.class))})})
@@ -59,7 +57,6 @@ public interface IEmployeeController {
             schema = @Schema(type = "object", example = "{ \"name\": \"John Smith\", \"age\": 24, \"salary\": 50000 }"))
                                             @RequestBody Map<String, Object> employeeInput);
 
-    // TODO this can't really be tested because the underlying API does not return the name of the employee
     @Operation(summary = "Delete employee by id", tags = {"employee"})
     @ApiResponses(value = {@ApiResponse(description = "successful operation",
             content = {@Content(mediaType = "application/json", schema = @Schema(type = "string", example = "John Smith"))})})
