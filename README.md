@@ -29,6 +29,9 @@ by: Timothy Cheng tim.cheng09@gmail.com https://www.linkedin.com/in/tcheng09/
 6. I generated an [OpenFeign](https://github.com/OpenFeign/feign) client using [openapi-generator](https://github.com/OpenAPITools/openapi-generator)
 7. I used [Wiremock](https://wiremock.org/) to mock out the endpoints of the API and wrote tests against them (service and controller)
 8. I added Swagger annotations to the implemented API and exposed it using [springdoc](https://springdoc.org/)
+9. I wrote an alternative implementation of the controller `IEmployeeController` which uses built-in Spring features 
+  that would cut down on boilerplate code. It's called `IEmployeeControllerImproved` and the implementation is called `EmployeeControllerImproved`
+   - The `@Component` annotation is commented out, but it can be easily swapped out
 
 ## Comments on implementation
 
